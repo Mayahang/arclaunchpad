@@ -360,32 +360,41 @@ export default function App() {
     try {
       const c = new ethers.Contract(LAUNCHPAD_ADDRESS, LP_ABI, provider);
       const addrs = await c.getAllTokens();
-      const infos = await Promise.all(
+      const infos = (await Promise.all(
         addrs.map(async (a) => {
-          const r = await c.tokenInfo(a);
-          const tokensSoldWhole = Number(r[9]) / 1e18;
-          const price = 1000 + tokensSoldWhole; // BASE_PRICE + soldWhole * SLOPE
-          return {
-            tokenAddress: r[0],
-            name: r[1],
-            symbol: r[2],
-            totalSupply: r[3],
-            description: r[4],
-            imageURI: r[5],
-            creator: r[6],
-            createdAt: r[7],
-            reserveUSDC: r[8],
-            tokensSold: r[9],
-            volumeUSDC: r[10],
-            holderCount: r[11],
-            price,
-          };
+          try {
+            const r = await c.tokenInfo(a);
+            const tokensSoldWhole = Number(r[9]) / 1e18;
+            const price = 1000 + tokensSoldWhole; // BASE_PRICE + soldWhole * SLOPE
+            return {
+              tokenAddress: r[0],
+              name: r[1],
+              symbol: r[2],
+              totalSupply: r[3],
+              description: r[4],
+              imageURI: r[5],
+              creator: r[6],
+              createdAt: r[7],
+              reserveUSDC: r[8],
+              tokensSold: r[9],
+              volumeUSDC: r[10],
+              holderCount: r[11],
+              price,
+            };
+          } catch {
+            // Token address returned by contract but tokenInfo reverted (stale/corrupt entry)
+            return null;
+          }
         })
-      );
+      )).filter(Boolean);
       setTokens(infos.reverse());
 
-      const h = await c.getTradeHistory();
-      setHistory([...h].reverse());
+      try {
+        const h = await c.getTradeHistory();
+        setHistory([...h].reverse());
+      } catch {
+        // History unavailable — non-fatal
+      }
     } catch (e) {
       setError(e.message);
     }
