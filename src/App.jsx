@@ -1257,6 +1257,9 @@ function DashboardTab({ holdings, tokens, history, address }) {
                   <div className="hold-bal">
                     {fmt(h.balance)} {h.symbol}
                   </div>
+                  <div style={{ fontFamily: "var(--mono)", fontSize: ".68rem", color: "var(--muted)", marginTop: 2 }}>
+                    ≈ {((parseFloat(ethers.formatUnits(BigInt(h.balance.toString()), 18)) * h.price) / 1e6).toFixed(4)} USDC
+                  </div>
                 </div>
                 <a
                   href={`${EXPLORER}/address/${h.tokenAddress}`}
