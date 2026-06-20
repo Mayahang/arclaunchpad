@@ -406,22 +406,26 @@ export default function App() {
     try {
       const c = new ethers.Contract(LAUNCHPAD_ADDRESS, LP_ABI, provider);
       const tAddrs = await c.getUserTokens(address);
-      const rows = await Promise.all(
+      const rows = (await Promise.all(
         tAddrs.map(async (t) => {
-          const info = await c.tokenInfo(t);
-          const bal = await c.getUserTokenBalance(address, t);
-          const tokensSoldWhole = Number(info[9]) / 1e18;
-          const price = 1000 + tokensSoldWhole; // BASE_PRICE + soldWhole * SLOPE
-          return {
-            tokenAddress: t,
-            name: info[1],
-            symbol: info[2],
-            imageURI: info[5],
-            balance: bal,
-            price,
-          };
+          try {
+            const info = await c.tokenInfo(t);
+            const bal = await c.getUserTokenBalance(address, t);
+            const tokensSoldWhole = Number(info[9]) / 1e18;
+            const price = 1000 + tokensSoldWhole;
+            return {
+              tokenAddress: t,
+              name: info[1],
+              symbol: info[2],
+              imageURI: info[5],
+              balance: bal,
+              price,
+            };
+          } catch {
+            return null;
+          }
         })
-      );
+      )).filter(Boolean);
       setHoldings(rows.filter((r) => r.balance > 0n));
     } catch {}
   }, [provider, address, refresh]);
@@ -1905,7 +1909,7 @@ function LiveFeed({ items, tokens }) {
           >
             {item.type === "buy" ? "▲" : "▼"} {short(item.trader || "")}{" "}
             {item.type} <strong>{tok?.symbol || "?"}</strong> ·{" "}
-            {fmt(item.uAmt || 0n, 4)} USDC
+            {fmtP(item.uAmt || 0n)} USDC
           </div>
         );
       })}
