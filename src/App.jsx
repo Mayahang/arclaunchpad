@@ -111,7 +111,7 @@ const CSS = `
   --bg:#060810;--surface:#0c0f1a;--surface2:#111527;--border:#1a1f35;
   --accent:#5fffb0;--accent2:#7b5cfa;--warn:#ffb347;
   --red:#ff4d6a;--green:#00e599;--blue:#3b9eff;
-  --text:#dde3f5;--muted:#4a5178;--radius:14px;
+  --text:#dde3f5;--muted:#8b96c8;--radius:14px;
   --mono:'Space Mono',monospace;--display:'Clash Display','Plus Jakarta Sans',sans-serif;
   --body:'Plus Jakarta Sans',sans-serif;
 }
@@ -952,8 +952,8 @@ function LaunchTab({ signer, address, onLaunched, setError }) {
                   stroke="rgba(255,255,255,.05)"
                   strokeDasharray="3 3"
                 />
-                <XAxis dataKey="pct" tick={{ fill: "#4a5178", fontSize: 10 }} />
-                <YAxis tick={{ fill: "#4a5178", fontSize: 10 }} width={70} />
+                <XAxis dataKey="pct" tick={{ fill: "#8b96c8", fontSize: 10 }} />
+                <YAxis tick={{ fill: "#8b96c8", fontSize: 10 }} width={70} />
                 <Tooltip
                   contentStyle={{
                     background: "var(--surface)",
@@ -1087,8 +1087,8 @@ function LeaderboardTab({ provider, tokens }) {
                 stroke="rgba(255,255,255,.05)"
                 strokeDasharray="3 3"
               />
-              <XAxis dataKey="name" tick={{ fill: "#4a5178", fontSize: 10 }} />
-              <YAxis tick={{ fill: "#4a5178", fontSize: 10 }} />
+              <XAxis dataKey="name" tick={{ fill: "#8b96c8", fontSize: 10 }} />
+              <YAxis tick={{ fill: "#8b96c8", fontSize: 10 }} />
               <Tooltip
                 contentStyle={{
                   background: "var(--surface)",
@@ -1836,10 +1836,10 @@ function TradeModal({
                     />
                     <XAxis
                       dataKey="time"
-                      tick={{ fill: "#4a5178", fontSize: 9 }}
+                      tick={{ fill: "#8b96c8", fontSize: 9 }}
                       interval="preserveStartEnd"
                     />
-                    <YAxis tick={{ fill: "#4a5178", fontSize: 9 }} width={65} />
+                    <YAxis tick={{ fill: "#8b96c8", fontSize: 9 }} width={65} />
                     <Tooltip
                       contentStyle={{
                         background: "var(--surface)",
@@ -1892,9 +1892,9 @@ function TradeModal({
                   />
                   <XAxis
                     dataKey="pct"
-                    tick={{ fill: "#4a5178", fontSize: 9 }}
+                    tick={{ fill: "#8b96c8", fontSize: 9 }}
                   />
-                  <YAxis tick={{ fill: "#4a5178", fontSize: 9 }} width={65} />
+                  <YAxis tick={{ fill: "#8b96c8", fontSize: 9 }} width={65} />
                   <Tooltip
                     contentStyle={{
                       background: "var(--surface)",
