@@ -102,6 +102,37 @@ const ago = (t) => {
 // Bonding curve spot price — mirrors Solidity
 const spotPrice = (tokensSold) => BASE_PRICE + Number(tokensSold) / 1e12;
 
+// ─── SPAM PREVENTION ─────────────────────────────────────────────────────────
+
+const SPAM_WORDS = ["test","xxx","aaa","bbb","ccc","ddd","eee","fff","ggg","hhh","iii","jjj","kkk","lll","mmm","nnn","ooo","ppp","qqq","rrr","sss","ttt","uuu","vvv","www","yyy","zzz","asdf","qwerty","1234","abcd","fuck","shit","scam","rug","fake","dump","pump"];
+const LAUNCH_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+
+const isSpamText = (text) => {
+  const lower = text.toLowerCase().replace(/[^a-z0-9]/g, "");
+  // All same character repeated
+  if (/^(.)\1+$/.test(lower)) return true;
+  // Known spam words
+  if (SPAM_WORDS.some((w) => lower.includes(w))) return true;
+  // Random-looking: too many consecutive consonants
+  if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(text)) return true;
+  return false;
+};
+
+const getCooldownRemaining = (address) => {
+  try {
+    const key = `launch_ts_${address?.toLowerCase()}`;
+    const last = parseInt(localStorage.getItem(key) || "0");
+    const remaining = LAUNCH_COOLDOWN_MS - (Date.now() - last);
+    return remaining > 0 ? remaining : 0;
+  } catch { return 0; }
+};
+
+const setCooldown = (address) => {
+  try {
+    localStorage.setItem(`launch_ts_${address?.toLowerCase()}`, Date.now().toString());
+  } catch {}
+};
+
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 
 const CSS = `
@@ -772,6 +803,28 @@ function LaunchTab({ signer, address, onLaunched, setError }) {
     if (!signer) return setError("Connect wallet first.");
     if (!form.name || !form.symbol || !form.supply)
       return setError("Name, symbol and supply are required.");
+
+    // ── Spam / bot checks ──
+    if (form.name.trim().length < 3)
+      return setError("Token name must be at least 3 characters.");
+    if (form.symbol.trim().length < 2)
+      return setError("Symbol must be at least 2 characters.");
+    if (form.description.trim().length < 20)
+      return setError("Please write a description of at least 20 characters.");
+    if (isSpamText(form.name))
+      return setError("Token name looks like spam. Please choose a real name.");
+    if (isSpamText(form.symbol))
+      return setError("Symbol looks invalid. Use a real ticker like MOON or ARK.");
+    const supplyNum = Number(form.supply);
+    if (supplyNum < 1000 || supplyNum > 1_000_000_000_000)
+      return setError("Supply must be between 1,000 and 1,000,000,000,000.");
+    const cooldown = getCooldownRemaining(address);
+    if (cooldown > 0) {
+      const mins = Math.ceil(cooldown / 60000);
+      return setError(`Please wait ${mins} more minute${mins > 1 ? "s" : ""} before launching another token.`);
+    }
+    // ── End spam checks ──
+
     setBusy(true);
     setError("");
     setDone("");
@@ -786,6 +839,7 @@ function LaunchTab({ signer, address, onLaunched, setError }) {
         form.imageURI
       );
       const rec = await tx.wait();
+      setCooldown(address);
       setDone(`✅ Token launched! TX: ${rec.hash}`);
       setForm({
         name: "",
@@ -921,10 +975,15 @@ function LaunchTab({ signer, address, onLaunched, setError }) {
               }}
             />
           )}
+          {getCooldownRemaining(address) > 0 && (
+            <div className="notice notice-info" style={{ marginBottom: 10, fontSize: ".78rem" }}>
+              ⏳ Cooldown active — next launch in {Math.ceil(getCooldownRemaining(address) / 60000)} min
+            </div>
+          )}
           <button
             className="btn btn-primary"
             style={{ width: "100%" }}
-            disabled={busy}
+            disabled={busy || getCooldownRemaining(address) > 0}
             onClick={launch}
           >
             {busy ? <span className="spinner" /> : "🚀 Launch Token"}
