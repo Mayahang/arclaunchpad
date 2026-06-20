@@ -858,24 +858,59 @@ function LaunchTab({ signer, address, onLaunched, setError }) {
             />
           </div>
           <div className="field">
-            <label>Image URL (HTTPS or IPFS)</label>
+            <label>Token Image</label>
+            <div
+              onClick={() => document.getElementById("img-upload").click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (!file || !file.type.startsWith("image/")) return;
+                if (file.size > 200 * 1024) { setError("Image must be under 200KB."); return; }
+                const reader = new FileReader();
+                reader.onload = (ev) => set("imageURI", ev.target.result);
+                reader.readAsDataURL(file);
+              }}
+              style={{
+                border: "2px dashed var(--border)",
+                borderRadius: 10,
+                padding: "18px 12px",
+                textAlign: "center",
+                cursor: "pointer",
+                color: "var(--muted)",
+                fontSize: ".8rem",
+                background: "var(--surface2)",
+              }}
+            >
+              {form.imageURI
+                ? "✅ Image selected — click or drop to change"
+                : "📁 Click to upload or drag & drop (PNG/JPG/GIF, max 200KB)"}
+            </div>
             <input
-              placeholder="https://… or ipfs://…"
-              value={form.imageURI}
-              onChange={(e) => set("imageURI", e.target.value)}
+              id="img-upload"
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 200 * 1024) { setError("Image must be under 200KB."); return; }
+                const reader = new FileReader();
+                reader.onload = (ev) => set("imageURI", ev.target.result);
+                reader.readAsDataURL(file);
+              }}
             />
           </div>
           {form.imageURI && (
             <img
               src={form.imageURI}
               alt="preview"
-              onError={(e) => (e.target.style.display = "none")}
               style={{
                 width: 56,
                 height: 56,
                 borderRadius: "50%",
                 objectFit: "cover",
-                border: "2px solid var(--border)",
+                border: "2px solid var(--accent)",
                 marginBottom: 14,
               }}
             />
