@@ -311,6 +311,7 @@ export default function App() {
   const [tokens, setTokens] = useState([]);
   const [history, setHistory] = useState([]);
   const [holdings, setHoldings] = useState([]);
+  const [holdingsLoading, setHoldingsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState(null);
@@ -403,14 +404,17 @@ export default function App() {
 
   const loadHoldings = useCallback(async () => {
     if (!provider || !address) return;
+    setHoldingsLoading(true);
     try {
       const c = new ethers.Contract(LAUNCHPAD_ADDRESS, LP_ABI, provider);
       const tAddrs = await c.getUserTokens(address);
       const rows = (await Promise.all(
         tAddrs.map(async (t) => {
           try {
-            const info = await c.tokenInfo(t);
-            const bal = await c.getUserTokenBalance(address, t);
+            const [info, bal] = await Promise.all([
+              c.tokenInfo(t),
+              c.getUserTokenBalance(address, t),
+            ]);
             const tokensSoldWhole = Number(info[9]) / 1e18;
             const price = 1000 + tokensSoldWhole;
             return {
@@ -428,6 +432,7 @@ export default function App() {
       )).filter(Boolean);
       setHoldings(rows.filter((r) => r.balance > 0n));
     } catch {}
+    setHoldingsLoading(false);
   }, [provider, address, refresh]);
 
   useEffect(() => {
@@ -595,6 +600,7 @@ export default function App() {
           {tab === "dashboard" && (
             <DashboardTab
               holdings={holdings}
+              holdingsLoading={holdingsLoading}
               tokens={tokens}
               history={history}
               address={address}
@@ -1211,7 +1217,7 @@ function HistoryTab({ history, tokens }) {
 
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
-function DashboardTab({ holdings, tokens, history, address }) {
+function DashboardTab({ holdings, holdingsLoading, tokens, history, address }) {
   const myTrades = history.filter(
     (h) => h.trader?.toLowerCase() === address?.toLowerCase()
   );
@@ -1258,7 +1264,11 @@ function DashboardTab({ holdings, tokens, history, address }) {
       <div className="grid-2">
         <div className="card">
           <div className="card-title">My Holdings</div>
-          {holdings.length === 0 ? (
+          {holdingsLoading ? (
+            <div className="empty" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <span className="spinner" /> Loading holdings…
+            </div>
+          ) : holdings.length === 0 ? (
             <div className="empty">You hold no tokens yet.</div>
           ) : (
             holdings.map((h) => (
